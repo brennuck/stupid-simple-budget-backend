@@ -31,7 +31,7 @@ const getTransactions = async () => {
     return result.rows;
 };
 
-const createWithdrawalTransaction = async (transaction: any) => {
+const createWithdrawalTransaction = async (transaction) => {
     const result = await pool.query(
         "INSERT INTO transactions (amount, description, date, from_account_id) VALUES ($1, $2, $3, $4) RETURNING *;",
         [transaction.amount, transaction.description, transaction.date, transaction.account_id]
@@ -39,7 +39,7 @@ const createWithdrawalTransaction = async (transaction: any) => {
     return result.rows[0];
 };
 
-const createDepositTransaction = async (transaction: any) => {
+const createDepositTransaction = async (transaction) => {
     const result = await pool.query(
         "INSERT INTO transactions (amount, description, date, to_account_id) VALUES ($1, $2, $3, $4) RETURNING *;",
         [transaction.amount, transaction.description, transaction.date, transaction.account_id]
@@ -47,16 +47,16 @@ const createDepositTransaction = async (transaction: any) => {
     return result.rows[0];
 };
 
-const withdrawFromAccount = async (account_id: number, amount: number) => {
-    const result = await pool.query("UPDATE accounts SET balance = balance - $1 WHERE id = $2 RETURNING *;", [
+const withdrawFromAccount = async (account_id, amount) => {
+    const result = await pool.query("UPDATE accounts SET balance = $1 WHERE id = $2 RETURNING *;", [
         amount,
         account_id,
     ]);
     return result.rows[0];
 };
 
-const depositToAccount = async (account_id: number, amount: number) => {
-    const result = await pool.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2 RETURNING *;", [
+const depositToAccount = async (account_id, amount) => {
+    const result = await pool.query("UPDATE accounts SET balance = $1 WHERE id = $2 RETURNING *;", [
         amount,
         account_id,
     ]);
