@@ -1,5 +1,5 @@
 import { Table, Tag, Typography, message } from "antd";
-import { formatCurrency } from "../../utiils";
+import { formatCurrency } from "../../utils";
 import { MinusSquareTwoTone, PlusSquareTwoTone } from "@ant-design/icons";
 import { useState } from "react";
 

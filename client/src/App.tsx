@@ -3,17 +3,19 @@ import "./App.css";
 import { AccountsTable } from "./components/AccountsTable";
 import { Col, Row, Skeleton, Typography } from "antd";
 import { TransactionsTable } from "./components/TransactionsTable";
+import { API_URL } from "./config";
 
 function App() {
     const [accountsData, setAccountsData] = useState<any>(null);
     const [transactionsData, setTransactionsData] = useState<any>(null);
 
     const fetchData = () => {
-        fetch("/accounts")
+        const url = API_URL ? API_URL : "";
+        fetch(`${url}/accounts`)
             .then((res) => res.json())
             .then((data) => setAccountsData(data));
 
-        fetch("/transactions")
+        fetch(`${url}/transactions`)
             .then((res) => res.json())
             .then((data) => setTransactionsData(data));
     };

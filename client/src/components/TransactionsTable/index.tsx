@@ -1,6 +1,6 @@
 import React from "react";
 import { Table, Tag, Typography } from "antd";
-import { formatCurrency } from "../../utiils";
+import { formatCurrency } from "../../utils";
 
 export const TransactionsTable = ({ data }: any) => {
     const typeIdMap = {
