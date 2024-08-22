@@ -27,7 +27,7 @@ const getAccounts = async () => {
 };
 
 const getTransactions = async () => {
-    const result = await pool.query("SELECT * FROM transactions order by date desc;");
+    const result = await pool.query("SELECT * FROM transactions order by created_at desc;");
     return result.rows;
 };
 
@@ -48,19 +48,41 @@ const createDepositTransaction = async (transaction) => {
 };
 
 const withdrawFromAccount = async (account_id, amount) => {
-    const result = await pool.query("UPDATE accounts SET balance = $1 WHERE id = $2 RETURNING *;", [
-        amount,
-        account_id,
-    ]);
-    return result.rows[0];
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const result = await client.query("UPDATE accounts SET balance = balance - $1 WHERE id = $2 RETURNING *;", [
+            amount,
+            account_id,
+        ]);
+        await client.query("UPDATE accounts SET balance = balance - $1 WHERE name = 'savings';", [amount]);
+        await client.query("COMMIT");
+        return result.rows[0];
+    } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+    } finally {
+        client.release();
+    }
 };
 
 const depositToAccount = async (account_id, amount) => {
-    const result = await pool.query("UPDATE accounts SET balance = $1 WHERE id = $2 RETURNING *;", [
-        amount,
-        account_id,
-    ]);
-    return result.rows[0];
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+        const result = await client.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2 RETURNING *;", [
+            amount,
+            account_id,
+        ]);
+        await client.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'savings';", [amount]);
+        await client.query("COMMIT");
+        return result.rows[0];
+    } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+    } finally {
+        client.release();
+    }
 };
 
 app.get("/accounts", async (req, res) => {
