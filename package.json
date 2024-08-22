@@ -2,9 +2,9 @@
     "name": "stupid-simple-budget",
     "version": "1.0.0",
     "description": "",
-    "main": "index.js",
+    "main": "index.tsx",
     "scripts": {
-        "start": "node server/index.tsx"
+        "start": "node index.tsx"
     },
     "keywords": [],
     "author": "",
