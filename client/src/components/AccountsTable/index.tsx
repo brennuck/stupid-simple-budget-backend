@@ -3,7 +3,7 @@ import { formatCurrency } from "../../utiils";
 import { MinusSquareTwoTone, PlusSquareTwoTone } from "@ant-design/icons";
 import { useState } from "react";
 
-export const AccountsTable = ({ data }: { data: any[] }) => {
+export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdate: () => void }) => {
     const [loading, setLoading] = useState(false);
 
     const typeColorMap = {
@@ -56,7 +56,7 @@ export const AccountsTable = ({ data }: { data: any[] }) => {
             }
 
             message.success("Deposit successful");
-            // onDataUpdate();
+            onDataUpdate();
         } catch (error) {
             console.error("Error depositing:", error);
             message.error("Failed to deposit");
@@ -106,7 +106,7 @@ export const AccountsTable = ({ data }: { data: any[] }) => {
             }
 
             message.success("Withdrawal successful");
-            // onDataUpdate();
+            onDataUpdate();
         } catch (error) {
             console.error("Error depositing:", error);
             message.error("Failed to deposit");
