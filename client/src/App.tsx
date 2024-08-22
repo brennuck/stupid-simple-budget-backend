@@ -26,8 +26,6 @@ function App() {
         );
     }
 
-    console.log("data -->", data);
-
     return (
         <>
             <Row>

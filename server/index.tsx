@@ -34,7 +34,7 @@ const getTransactions = async () => {
 const createWithdrawalTransaction = async (transaction) => {
     const result = await pool.query(
         "INSERT INTO transactions (amount, description, date, from_account_id) VALUES ($1, $2, $3, $4) RETURNING *;",
-        [transaction.amount, transaction.description, transaction.date, transaction.account_id]
+        [`-${transaction.amount}`, transaction.description, transaction.date, transaction.account_id]
     );
     return result.rows[0];
 };
@@ -51,11 +51,11 @@ const withdrawFromAccount = async (account_id, amount) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
-        const result = await client.query("UPDATE accounts SET balance = balance - $1 WHERE id = $2 RETURNING *;", [
+        const result = await client.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2 RETURNING *;", [
             amount,
             account_id,
         ]);
-        await client.query("UPDATE accounts SET balance = balance - $1 WHERE name = 'savings';", [amount]);
+        await client.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'savings';", [amount]);
         await client.query("COMMIT");
         return result.rows[0];
     } catch (e) {
