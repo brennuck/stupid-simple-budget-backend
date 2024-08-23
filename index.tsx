@@ -12,6 +12,12 @@ const pool = new Pool({
     },
 });
 
+pool.connect((err, client, release) => {
+    if (err) {
+        return console.error("Error acquiring client", err.stack);
+    }
+});
+
 const app = express();
 
 const PORT = process.env.PORT || 2933;
