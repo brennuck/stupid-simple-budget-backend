@@ -2,6 +2,7 @@ import { Table, Tag, Typography, message } from "antd";
 import { formatCurrency } from "../../utils";
 import { MinusSquareTwoTone, PlusSquareTwoTone } from "@ant-design/icons";
 import { useState } from "react";
+import { API_URL } from "../../config";
 
 export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdate: () => void }) => {
     const [loading, setLoading] = useState(false);
@@ -40,7 +41,8 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
         }
 
         try {
-            const response = await fetch("/deposit", {
+            const url = API_URL ? API_URL : "";
+            const response = await fetch(`${url}/deposit`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -93,7 +95,8 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
         }
 
         try {
-            const response = await fetch("/withdrawal", {
+            const url = API_URL ? API_URL : "";
+            const response = await fetch(`${url}/withdrawal`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
