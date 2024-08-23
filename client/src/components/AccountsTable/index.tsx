@@ -137,6 +137,7 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
             dataIndex: "balance",
             key: "balance",
             render: (balance: number) => <Typography.Text>{formatCurrency(balance)}</Typography.Text>,
+            width: 91.6,
         },
         {
             title: "Type",
