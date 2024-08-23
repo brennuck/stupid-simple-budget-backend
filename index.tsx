@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const { Pool } = require("pg");
 const cors = require("cors");
+const cron = require("node-cron");
 
 require("dotenv").config();
 
@@ -29,6 +30,52 @@ app.use(
         extended: true,
     })
 );
+
+const performWeeklyDeposits = async () => {
+    const accounts = await getWeeklyDeposits();
+    const today = new Date();
+
+    for (const account of accounts) {
+        try {
+            const startDate = new Date(account.insert_start_date);
+            let shouldDeposit = false;
+
+            switch (account.insert_frequency) {
+                case "weekly":
+                    shouldDeposit = (today.getTime() - startDate.getTime()) % (7 * 24 * 60 * 60 * 1000) === 0;
+                    break;
+                case "bi-weekly":
+                    shouldDeposit = (today.getTime() - startDate.getTime()) % (14 * 24 * 60 * 60 * 1000) === 0;
+                    break;
+                case "monthly":
+                    shouldDeposit = today.getDate() === startDate.getDate();
+                    break;
+            }
+
+            if (shouldDeposit) {
+                const transaction = await createDepositTransaction({
+                    amount: account.insert_amount,
+                    description: `Automatic ${account.insert_frequency} deposit`,
+                    date: today.toISOString(),
+                    account_id: account.id,
+                });
+                await depositToAccount(transaction.to_account_id, transaction.amount);
+                console.log(
+                    `Automatic ${account.insert_frequency} deposit of ${account.insert_amount} to account ${account.id} successful`
+                );
+            }
+        } catch (error) {
+            console.error(`Error performing automatic deposit to account ${account.id}:`, error);
+        }
+    }
+};
+
+const getWeeklyDeposits = async () => {
+    const result = await pool.query(
+        "SELECT id, insert_frequency, insert_amount, insert_start_date FROM accounts where insert_frequency is not null and insert_amount is not null and insert_start_date is not null;"
+    );
+    return result.rows;
+};
 
 const getAccounts = async () => {
     const result = await pool.query("SELECT * FROM accounts order by id asc;");
@@ -142,6 +189,12 @@ app.post("/deposit", async (req, res) => {
     const transaction = await createDepositTransaction(req.body);
     await depositToAccount(transaction.to_account_id, transaction.amount);
     return res.json(transaction);
+});
+
+// Schedule the deposits to run daily at midnight
+cron.schedule("0 0 * * *", () => {
+    console.log("Running daily deposit check");
+    performWeeklyDeposits();
 });
 
 app.listen(PORT, () => {
