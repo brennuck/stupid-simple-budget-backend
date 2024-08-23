@@ -85,8 +85,24 @@ const depositToAccount = async (account_id, amount) => {
     }
 };
 
-app.get("/", (req, res) => {
-    return res.json({ message: process.env.DATABASE_URL });
+app.get("/", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT NOW() as current_time");
+        return res.json({
+            status: "healthy",
+            database_connection: "successful",
+            current_time: result.rows[0].current_time,
+            message: "HEALTHY",
+        });
+    } catch (error) {
+        console.error("Database connection error:", error);
+        return res.status(500).json({
+            status: "unhealthy",
+            database_connection: "failed",
+            error: "Unable to connect to the database",
+            message: "UNHEALTHY",
+        });
+    }
 });
 
 app.get("/accounts", async (req, res) => {
