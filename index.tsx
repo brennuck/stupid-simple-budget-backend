@@ -64,7 +64,11 @@ const withdrawFromAccount = async (account_id, amount) => {
             amount,
             account_id,
         ]);
-        await client.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'savings';", [amount]);
+
+        if (account_id !== 1) {
+            await client.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'savings';", [amount]);
+        }
+
         await client.query("COMMIT");
         return result.rows[0];
     } catch (e) {
@@ -83,7 +87,11 @@ const depositToAccount = async (account_id, amount) => {
             amount,
             account_id,
         ]);
-        await client.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'savings';", [amount]);
+
+        if (account_id !== 1) {
+            await client.query("UPDATE accounts SET balance = balance - $1 WHERE name = 'savings';", [amount]);
+        }
+
         await client.query("COMMIT");
         return result.rows[0];
     } catch (e) {
