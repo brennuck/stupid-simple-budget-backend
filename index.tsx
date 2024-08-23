@@ -86,7 +86,7 @@ const depositToAccount = async (account_id, amount) => {
 };
 
 app.get("/", (req, res) => {
-    return res.json({ message: "Hello World" });
+    return res.json({ message: process.env.DATABASE_URL });
 });
 
 app.get("/accounts", async (req, res) => {
