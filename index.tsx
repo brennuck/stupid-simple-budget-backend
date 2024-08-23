@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const { Pool } = require("pg");
+const cors = require("cors");
 
 const pool = new Pool({
     user: "brennon",
@@ -14,6 +15,7 @@ const app = express();
 
 const PORT = process.env.PORT || 2933;
 
+app.use(cors());
 app.use(bodyParser.json());
 app.use(
     bodyParser.urlencoded({
