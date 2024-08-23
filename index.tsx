@@ -85,6 +85,10 @@ const depositToAccount = async (account_id, amount) => {
     }
 };
 
+app.get("/", (req, res) => {
+    return res.json({ message: "Hello World" });
+});
+
 app.get("/accounts", async (req, res) => {
     const accounts = await getAccounts();
     return res.json(accounts);
