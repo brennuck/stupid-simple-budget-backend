@@ -20,13 +20,14 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
         const amount = prompt("Enter deposit amount:");
         if (amount === null) {
             setLoading(false);
+            message.error("Failed to deposit - Invalid amount - null");
             return;
         }
 
         const numAmount = parseFloat(amount);
         if (isNaN(numAmount) || numAmount <= 0) {
-            message.error("Invalid amount");
             setLoading(false);
+            message.error("Failed to deposit - Invalid amount " + numAmount);
             return;
         }
 
@@ -34,6 +35,7 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
 
         if (description === null) {
             setLoading(false);
+            message.error("Failed to deposit - Invalid description " + description);
             return;
         }
 
@@ -52,7 +54,8 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
             });
 
             if (!response.ok) {
-                throw new Error("Failed to deposit");
+                message.error("Failed to deposit");
+                return;
             }
 
             message.success("Deposit successful");
@@ -70,12 +73,13 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
         const amount = prompt("Enter withdrawal amount:");
         if (amount === null) {
             setLoading(false);
+            message.error("Failed to withdraw - Invalid amount - null");
             return;
         }
 
         const numAmount = parseFloat(amount);
         if (isNaN(numAmount) || numAmount <= 0) {
-            message.error("Invalid amount");
+            message.error("Failed to withdraw - Invalid amount " + numAmount);
             setLoading(false);
             return;
         }
@@ -83,6 +87,7 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
         const description = prompt("Enter description:");
 
         if (description === null) {
+            message.error("Failed to withdraw - Invalid description " + description);
             setLoading(false);
             return;
         }
@@ -102,7 +107,9 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
             });
 
             if (!response.ok) {
-                throw new Error("Failed to deposit");
+                message.error("Failed to withdraw");
+                console.log("error", response);
+                return;
             }
 
             message.success("Withdrawal successful");
