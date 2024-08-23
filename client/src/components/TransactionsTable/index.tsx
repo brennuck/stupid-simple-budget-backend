@@ -39,10 +39,11 @@ export const TransactionsTable = ({ data }: any) => {
         },
         {
             title: "Type",
-            dataIndex: "from_account_id",
-            key: "from_account_id",
-            render: (from_account_id: string) => {
-                const typeId = Number(from_account_id) as keyof typeof typeIdMap;
+            dataIndex: ["from_account_id", "to_account_id"],
+            key: "account_id",
+            render: (text: string, record: any) => {
+                const accountId = record.from_account_id || record.to_account_id;
+                const typeId = Number(accountId) as keyof typeof typeIdMap;
                 const { color, category } = typeIdMap[typeId] || { color: "default", category: "unknown" };
                 return <Tag color={color}>{category}</Tag>;
             },
