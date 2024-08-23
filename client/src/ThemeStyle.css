@@ -1,0 +1,37 @@
+.light-mode {
+    background-color: #ffffff;
+    color: rgba(0, 0, 0, 0.85);
+    min-height: 100vh;
+}
+
+.dark-mode {
+    background-color: #141414;
+    color: rgba(255, 255, 255, 0.85);
+    min-height: 100vh;
+}
+
+.light-mode .ant-table {
+    background-color: #ffffff;
+}
+
+.dark-mode .ant-table {
+    background-color: #1f1f1f;
+}
+
+.light-mode .ant-table-thead > tr > th {
+    background-color: #fafafa;
+}
+
+.dark-mode .ant-table-thead > tr > th {
+    background-color: #1f1f1f;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.dark-mode .ant-table-tbody > tr > td {
+    background-color: #141414;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.dark-mode .ant-typography {
+    color: rgba(255, 255, 255, 0.85);
+}
