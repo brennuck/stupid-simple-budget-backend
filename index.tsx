@@ -3,12 +3,10 @@ const bodyParser = require("body-parser");
 const { Pool } = require("pg");
 const cors = require("cors");
 
+require("dotenv").config();
+
 const pool = new Pool({
-    user: "brennon",
-    host: "localhost",
-    database: "ssb",
-    password: "PassW2933",
-    port: 54323,
+    connectionString: process.env.DATABASE_URL,
 });
 
 const app = express();
