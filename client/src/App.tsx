@@ -6,11 +6,13 @@ import { TransactionsTable } from "./components/TransactionsTable";
 import { API_URL } from "./config";
 import { ConfigProvider, theme } from "antd";
 import "./ThemeStyle.css";
+import PasswordProtection from "./components/PasswordProtection";
 
 function App() {
     const [isDarkMode, setIsDarkMode] = useState(false);
     const [accountsData, setAccountsData] = useState<any>(null);
     const [transactionsData, setTransactionsData] = useState<any>(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const toggleTheme = () => {
         setIsDarkMode(!isDarkMode);
@@ -28,16 +30,24 @@ function App() {
     };
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        if (isAuthenticated) {
+            fetchData();
+        }
+    }, [isAuthenticated]);
 
     const onDataUpdate = () => {
         fetchData();
     };
 
+    const handleCorrectPassword = () => {
+        setIsAuthenticated(true);
+    };
+
     let children;
 
-    if (!accountsData) {
+    if (!isAuthenticated) {
+        children = <PasswordProtection onCorrectPassword={handleCorrectPassword} />;
+    } else if (!accountsData) {
         children = <Skeleton active />;
     } else {
         children = (
@@ -56,13 +66,15 @@ function App() {
             }}
         >
             <div className={isDarkMode ? "dark-mode" : "light-mode"}>
-                <Row>
-                    <Col offset={1}>
-                        <Typography.Title level={2} onClick={toggleTheme} style={{ cursor: "pointer" }}>
-                            Stupid Simple Budget
-                        </Typography.Title>
-                    </Col>
-                </Row>
+                {isAuthenticated && (
+                    <Row>
+                        <Col offset={1}>
+                            <Typography.Title level={2} onClick={toggleTheme} style={{ cursor: "pointer" }}>
+                                Stupid Simple Budget
+                            </Typography.Title>
+                        </Col>
+                    </Row>
+                )}
                 <Row>
                     <Col offset={1} span={22}>
                         {children}
