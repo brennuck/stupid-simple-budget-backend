@@ -146,6 +146,17 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
             render: (type: AccountType) => <Tag color={typeColorMap[type]}>{type}</Tag>,
         },
         {
+            title: "Deposit",
+            dataIndex: ["insert_frequency", "insert_amount"],
+            key: "insert",
+            render: (text: string, record: any) => (
+                <Tag>
+                    {record.insert_frequency !== "never" && record.insert_frequency}
+                    {record.insert_amount && `- ${formatCurrency(record.insert_amount)}`}
+                </Tag>
+            ),
+        },
+        {
             title: "",
             dataIndex: "id",
             key: "deposit",
