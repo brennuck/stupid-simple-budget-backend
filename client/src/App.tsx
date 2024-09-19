@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import "./App.css";
 import { AccountsTable } from "./components/AccountsTable";
-import { Col, Row, Skeleton, Typography } from "antd";
+import { Col, Row, Skeleton, Typography, Button, message, Upload, theme, ConfigProvider } from "antd";
 import { TransactionsTable } from "./components/TransactionsTable";
 import { API_URL } from "./config";
-import { ConfigProvider, theme } from "antd";
 import "./ThemeStyle.css";
 import PasswordProtection from "./components/PasswordProtection";
+import { DownloadOutlined, UploadOutlined } from "@ant-design/icons";
 
 function App() {
     const [isDarkMode, setIsDarkMode] = useState(false);
@@ -43,6 +43,52 @@ function App() {
         setIsAuthenticated(true);
     };
 
+    const handleDownload = async () => {
+        try {
+            const apiUrl = API_URL ? API_URL : "";
+            const response = await fetch(`${apiUrl}/download-data`);
+            if (!response.ok) {
+                throw new Error("Failed to download data");
+            }
+            const data = await response.json();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.style.display = "none";
+            a.href = url;
+            a.download = "budget_data.json";
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error downloading data:", error);
+            message.error("Failed to download data");
+        }
+    };
+
+    const handleUpload = async (file: File) => {
+        try {
+            const fileContent = await file.text();
+            const data = JSON.parse(fileContent);
+            const url = API_URL ? API_URL : "";
+            const response = await fetch(`${url}/upload-data`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            });
+            if (!response.ok) {
+                throw new Error("Failed to upload data");
+            }
+            message.success("Data uploaded successfully");
+            fetchData();
+        } catch (error) {
+            console.error("Error uploading data:", error);
+            message.error("Failed to upload data");
+        }
+    };
+
     let children;
 
     if (!isAuthenticated) {
@@ -54,6 +100,21 @@ function App() {
             <>
                 <AccountsTable data={accountsData} onDataUpdate={onDataUpdate} />
                 <TransactionsTable data={transactionsData} />
+                <div style={{ marginTop: "20px", display: "flex", justifyContent: "space-between" }}>
+                    <Button icon={<DownloadOutlined />} onClick={handleDownload}>
+                        Download Data
+                    </Button>
+                    <Upload
+                        accept=".json"
+                        showUploadList={false}
+                        beforeUpload={(file) => {
+                            handleUpload(file);
+                            return false;
+                        }}
+                    >
+                        <Button icon={<UploadOutlined />}>Upload Data</Button>
+                    </Upload>
+                </div>
             </>
         );
     }

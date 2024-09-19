@@ -197,6 +197,131 @@ cron.schedule("0 0 * * *", () => {
     performWeeklyDeposits();
 });
 
+// Add these functions after the existing ones
+
+const getAllData = async () => {
+    const accounts = await getAccounts();
+    const transactions = await getTransactions();
+    return { accounts, transactions };
+};
+
+const createTablesIfNotExist = async () => {
+    const client = await pool.connect();
+    try {
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS accounts (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        friendly_name VARCHAR(255),
+        balance NUMERIC(10, 2) NOT NULL,
+        type VARCHAR(50),
+        insert_frequency VARCHAR(50),
+        insert_amount NUMERIC(10, 2),
+        insert_start_date DATE
+      );
+
+      CREATE TABLE IF NOT EXISTS transactions (
+        id SERIAL PRIMARY KEY,
+        amount NUMERIC(10, 2) NOT NULL,
+        description TEXT,
+        date DATE NOT NULL,
+        from_account_id INTEGER REFERENCES accounts(id),
+        to_account_id INTEGER REFERENCES accounts(id),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    } finally {
+        client.release();
+    }
+};
+
+const insertData = async (data) => {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+
+        // Insert accounts
+        for (const account of data.accounts) {
+            await client.query(
+                `
+        INSERT INTO accounts (name, friendly_name, balance, type, insert_frequency, insert_amount, insert_start_date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (id) DO UPDATE SET
+          name = EXCLUDED.name,
+          friendly_name = EXCLUDED.friendly_name,
+          balance = EXCLUDED.balance,
+          type = EXCLUDED.type,
+          insert_frequency = EXCLUDED.insert_frequency,
+          insert_amount = EXCLUDED.insert_amount,
+          insert_start_date = EXCLUDED.insert_start_date
+      `,
+                [
+                    account.name,
+                    account.friendly_name,
+                    account.balance,
+                    account.type,
+                    account.insert_frequency,
+                    account.insert_amount,
+                    account.insert_start_date,
+                ]
+            );
+        }
+
+        // Insert transactions
+        for (const transaction of data.transactions) {
+            await client.query(
+                `
+        INSERT INTO transactions (amount, description, date, from_account_id, to_account_id)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (id) DO UPDATE SET
+          amount = EXCLUDED.amount,
+          description = EXCLUDED.description,
+          date = EXCLUDED.date,
+          from_account_id = EXCLUDED.from_account_id,
+          to_account_id = EXCLUDED.to_account_id
+      `,
+                [
+                    transaction.amount,
+                    transaction.description,
+                    transaction.date,
+                    transaction.from_account_id,
+                    transaction.to_account_id,
+                ]
+            );
+        }
+
+        await client.query("COMMIT");
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
+
+// Add these new routes after the existing ones
+
+app.get("/download-data", async (req, res) => {
+    try {
+        const data = await getAllData();
+        res.json(data);
+    } catch (error) {
+        console.error("Error downloading data:", error);
+        res.status(500).json({ error: "An error occurred while downloading data" });
+    }
+});
+
+app.post("/upload-data", async (req, res) => {
+    try {
+        await createTablesIfNotExist();
+        await insertData(req.body);
+        res.json({ message: "Data uploaded successfully" });
+    } catch (error) {
+        console.error("Error uploading data:", error);
+        res.status(500).json({ error: "An error occurred while uploading data" });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
 });
