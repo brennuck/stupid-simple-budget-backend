@@ -135,7 +135,7 @@ const depositToAccount = async (account_id, amount) => {
             account_id,
         ]);
 
-        if (account_id !== 1) {
+        if (account_id !== 1 && account_id !== 9) {
             await client.query("UPDATE accounts SET balance = balance - $1 WHERE name = 'savings';", [amount]);
         }
 
