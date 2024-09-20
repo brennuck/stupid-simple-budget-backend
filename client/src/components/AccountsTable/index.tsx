@@ -1,4 +1,4 @@
-import { Table, Tag, Typography, message } from "antd";
+import { Table, Tag, Typography, message, Breakpoint } from "antd";
 import { formatCurrency } from "../../utils";
 import { MinusSquareTwoTone, PlusSquareTwoTone } from "@ant-design/icons";
 import { useState } from "react";
@@ -143,12 +143,14 @@ export const AccountsTable = ({ data, onDataUpdate }: { data: any[]; onDataUpdat
             title: "Type",
             dataIndex: "type",
             key: "type",
+            responsive: ["md" as Breakpoint],
             render: (type: AccountType) => <Tag color={typeColorMap[type]}>{type}</Tag>,
         },
         {
             title: "Deposit",
             dataIndex: ["insert_frequency", "insert_amount"],
             key: "insert",
+            responsive: ["md" as Breakpoint],
             render: (text: string, record: any) => (
                 <Tag>
                     {record.insert_frequency !== "never" && record.insert_frequency}
