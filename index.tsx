@@ -205,11 +205,11 @@ const getAllData = async () => {
     return { accounts, transactions };
 };
 
-const createTablesIfNotExist = async () => {
+const createTables = async () => {
     const client = await pool.connect();
     try {
         await client.query(`
-      CREATE TABLE IF NOT EXISTS accounts (
+      CREATE TABLE accounts (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         friendly_name VARCHAR(255),
@@ -219,8 +219,10 @@ const createTablesIfNotExist = async () => {
         insert_amount NUMERIC(10, 2),
         insert_start_date DATE
       );
+    `);
 
-      CREATE TABLE IF NOT EXISTS transactions (
+        await client.query(`
+        CREATE TABLE transactions (
         id SERIAL PRIMARY KEY,
         amount NUMERIC(10, 2) NOT NULL,
         description TEXT,
@@ -235,26 +237,16 @@ const createTablesIfNotExist = async () => {
     }
 };
 
-const insertData = async (data) => {
+const insertAccounts = async (accounts) => {
     const client = await pool.connect();
     try {
+        // First transaction: Insert or update accounts
         await client.query("BEGIN");
-
-        // Insert accounts
-        for (const account of data.accounts) {
+        for (const account of accounts) {
             await client.query(
                 `
-        INSERT INTO accounts (name, friendly_name, balance, type, insert_frequency, insert_amount, insert_start_date)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (id) DO UPDATE SET
-          name = EXCLUDED.name,
-          friendly_name = EXCLUDED.friendly_name,
-          balance = EXCLUDED.balance,
-          type = EXCLUDED.type,
-          insert_frequency = EXCLUDED.insert_frequency,
-          insert_amount = EXCLUDED.insert_amount,
-          insert_start_date = EXCLUDED.insert_start_date
-      `,
+                INSERT INTO accounts (name, friendly_name, balance, type, insert_frequency, insert_amount, insert_start_date) VALUES ($1, $2, $3, $4, $5, $6, $7);
+            `,
                 [
                     account.name,
                     account.friendly_name,
@@ -266,20 +258,23 @@ const insertData = async (data) => {
                 ]
             );
         }
+        await client.query("COMMIT");
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
+    } finally {
+        client.release();
+    }
+};
 
-        // Insert transactions
-        for (const transaction of data.transactions) {
+const insertTransactions = async (transactions) => {
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+
+        for (const transaction of transactions) {
             await client.query(
-                `
-        INSERT INTO transactions (amount, description, date, from_account_id, to_account_id)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (id) DO UPDATE SET
-          amount = EXCLUDED.amount,
-          description = EXCLUDED.description,
-          date = EXCLUDED.date,
-          from_account_id = EXCLUDED.from_account_id,
-          to_account_id = EXCLUDED.to_account_id
-      `,
+                `INSERT INTO transactions (amount, description, date, from_account_id, to_account_id) VALUES ($1, $2, $3, $4, $5);`,
                 [
                     transaction.amount,
                     transaction.description,
@@ -299,6 +294,16 @@ const insertData = async (data) => {
     }
 };
 
+const insertData = async (data) => {
+    try {
+        await insertAccounts(data.accounts);
+        await insertTransactions(data.transactions);
+    } catch (error) {
+        console.error("Error inserting data:", error);
+        throw error;
+    }
+};
+
 // Add these new routes after the existing ones
 
 app.get("/download-data", async (req, res) => {
@@ -313,7 +318,7 @@ app.get("/download-data", async (req, res) => {
 
 app.post("/upload-data", async (req, res) => {
     try {
-        await createTablesIfNotExist();
+        await createTables();
         await insertData(req.body);
         res.json({ message: "Data uploaded successfully" });
     } catch (error) {

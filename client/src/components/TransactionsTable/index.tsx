@@ -5,14 +5,14 @@ import { formatCurrency } from "../../utils";
 export const TransactionsTable = ({ data }: any) => {
     const typeIdMap = {
         1: { color: "green", category: "Savings Account" },
-        5: { color: "magenta", category: "Brennon Allowance" },
-        6: { color: "magenta", category: "Kayla Allowance" },
-        7: { color: "magenta", category: "Jo Allowance" },
-        8: { color: "warning", category: "Grocery Budget" },
-        9: { color: "warning", category: "Gas Budget" },
-        10: { color: "green", category: "Brennon Roth IRA" },
-        11: { color: "green", category: "Kayla Roth IRA" },
-        12: { color: "blue", category: "Stock Market" },
+        2: { color: "magenta", category: "Brennon Allowance" },
+        3: { color: "magenta", category: "Kayla Allowance" },
+        4: { color: "magenta", category: "Jo Allowance" },
+        5: { color: "warning", category: "Grocery Budget" },
+        6: { color: "warning", category: "Gas Budget" },
+        7: { color: "green", category: "Brennon Roth IRA" },
+        8: { color: "green", category: "Kayla Roth IRA" },
+        9: { color: "blue", category: "Stock Market" },
     } as const;
 
     const columns = [

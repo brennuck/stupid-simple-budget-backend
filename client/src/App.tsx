@@ -94,7 +94,21 @@ function App() {
     if (!isAuthenticated) {
         children = <PasswordProtection onCorrectPassword={handleCorrectPassword} />;
     } else if (!accountsData) {
-        children = <Skeleton active />;
+        children = (
+            <>
+                <Skeleton active />
+                <Upload
+                    accept=".json"
+                    showUploadList={false}
+                    beforeUpload={(file) => {
+                        handleUpload(file);
+                        return false;
+                    }}
+                >
+                    <Button icon={<UploadOutlined />}>Upload Data</Button>
+                </Upload>
+            </>
+        );
     } else {
         children = (
             <>
