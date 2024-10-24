@@ -107,16 +107,14 @@ const withdrawFromAccount = async (account_id, amount) => {
     const client = await pool.connect();
     try {
         await client.query("BEGIN");
+
         const result = await client.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2 RETURNING *;", [
             amount,
             account_id,
         ]);
 
-        if (account_id !== 1) {
-            await client.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'savings';", [amount]);
-        }
-
         await client.query("COMMIT");
+
         return result.rows[0];
     } catch (e) {
         await client.query("ROLLBACK");
