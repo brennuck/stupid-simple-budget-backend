@@ -82,6 +82,15 @@ const getAccounts = async () => {
     return result.rows;
 };
 
+const createAccount = async (account) => {
+    const result = await pool.query("INSERT INTO accounts (name, balance, type) VALUES ($1, $2, $3) RETURNING *;", [
+        account.name,
+        account.balance,
+        account.type,
+    ]);
+    return result.rows[0];
+};
+
 const getTransactions = async () => {
     const result = await pool.query("SELECT * FROM transactions order by created_at desc;");
     return result.rows;
@@ -147,6 +156,46 @@ const depositToAccount = async (account_id, amount) => {
     }
 };
 
+const createTransaction = async (transaction) => {
+    console.log(transaction);
+    const client = await pool.connect();
+    try {
+        await client.query("BEGIN");
+
+        if (transaction.type === "expense") {
+            await pool.query(
+                "INSERT INTO transactions (amount, description, date, from_account_id) VALUES ($1, $2, $3, $4);",
+                [transaction.amount, transaction.description, transaction.date, transaction.account_id]
+            );
+            await pool.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2;", [
+                transaction.amount,
+                transaction.account_id,
+            ]);
+            if (transaction.account_id !== 1 && transaction.account_id !== 9) {
+                await pool.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'savings';", [
+                    transaction.amount,
+                ]);
+            }
+        } else {
+            await pool.query(
+                "INSERT INTO transactions (amount, description, date, to_account_id) VALUES ($1, $2, $3, $4) RETURNING *;",
+                [transaction.amount, transaction.description, transaction.date, transaction.account_id]
+            );
+            await pool.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2;", [
+                transaction.amount,
+                transaction.account_id,
+            ]);
+        }
+
+        await client.query("COMMIT");
+    } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+    } finally {
+        client.release();
+    }
+};
+
 app.get("/", async (req, res) => {
     try {
         const result = await pool.query("SELECT NOW() as current_time");
@@ -172,20 +221,18 @@ app.get("/accounts", async (req, res) => {
     return res.json(accounts);
 });
 
+app.post("/account", async (req, res) => {
+    const account = await createAccount(req.body);
+    return res.json(account);
+});
+
 app.get("/transactions", async (req, res) => {
     const transactions = await getTransactions();
     return res.json(transactions);
 });
 
-app.post("/withdrawal", async (req, res) => {
-    const transaction = await createWithdrawalTransaction(req.body);
-    await withdrawFromAccount(transaction.from_account_id, transaction.amount);
-    return res.json(transaction);
-});
-
-app.post("/deposit", async (req, res) => {
-    const transaction = await createDepositTransaction(req.body);
-    await depositToAccount(transaction.to_account_id, transaction.amount);
+app.post("/transaction", async (req, res) => {
+    const transaction = await createTransaction(req.body);
     return res.json(transaction);
 });
 
