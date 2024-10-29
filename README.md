@@ -93,7 +93,3 @@ If you'd like to contribute to the Stupid Simple Budget project, please follow t
 5. Submit a pull request to the original repository.
 
 Please ensure that your code follows the project's coding conventions and that you've added appropriate tests for your changes.
-
-## License
-
-This project is licensed under the [MIT License](LICENSE).
