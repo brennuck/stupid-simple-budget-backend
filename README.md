@@ -2,6 +2,9 @@
 
 Stupid Simple Budget is a web application that helps users manage their personal finances. The backend of this application is built using Node.js, Express, and PostgreSQL.
 
+### Frontend
+https://github.com/brennuck/stupid-simple-budget-frontend
+
 ## Features
 
 1. **Account Management**: Users can create and manage their bank accounts, including their name, balance, and type (e.g., checking, savings).
