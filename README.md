@@ -74,14 +74,6 @@ The application provides the following API endpoints:
     ```
     This will run the linter and fix any code style issues.
 
-## Future Improvements
-
--   Implement user authentication and authorization.
--   Add support for recurring transactions and scheduled transfers.
--   Enhance the data visualization and reporting capabilities.
--   Improve error handling and logging.
--   Integrate with third-party financial services (e.g., bank APIs).
-
 ## Contributing
 
 If you'd like to contribute to the Stupid Simple Budget project, please follow these steps:
