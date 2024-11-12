@@ -136,54 +136,6 @@ const createTransaction = async (transaction) => {
     }
 };
 
-app.get("/", async (req, res) => {
-    try {
-        const result = await pool.query("SELECT NOW() as current_time");
-        return res.json({
-            status: "healthy",
-            database_connection: "successful",
-            current_time: result.rows[0].current_time,
-            message: "HEALTHY",
-        });
-    } catch (error) {
-        console.error("Database connection error:", error);
-        return res.status(500).json({
-            status: "unhealthy",
-            database_connection: "failed",
-            error: "Unable to connect to the database",
-            message: "UNHEALTHY",
-        });
-    }
-});
-
-app.get("/accounts", async (req, res) => {
-    const accounts = await getAccounts();
-    return res.json(accounts);
-});
-
-app.post("/account", async (req, res) => {
-    const account = await createAccount(req.body);
-    return res.json(account);
-});
-
-app.get("/transactions", async (req, res) => {
-    const transactions = await getTransactions();
-    return res.json(transactions);
-});
-
-app.post("/transaction", async (req, res) => {
-    const transaction = await createTransaction(req.body);
-    return res.json(transaction);
-});
-
-// Schedule the deposits to run daily at midnight
-// cron.schedule("0 0 * * *", () => {
-//     console.log("Running daily deposit check");
-//     performWeeklyDeposits();
-// });
-
-// Add these functions after the existing ones
-
 const getAllData = async () => {
     const accounts = await getAccounts();
     const transactions = await getTransactions();
@@ -193,16 +145,13 @@ const getAllData = async () => {
 const createTables = async () => {
     const client = await pool.connect();
     try {
+        await client.query("BEGIN");
         await client.query(`
       CREATE TABLE accounts (
         id SERIAL PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
-        friendly_name VARCHAR(255),
         balance NUMERIC(10, 2) NOT NULL,
-        type VARCHAR(50),
-        insert_frequency VARCHAR(50),
-        insert_amount NUMERIC(10, 2),
-        insert_start_date DATE
+        type VARCHAR(50) NOT NULL
       );
     `);
 
@@ -217,6 +166,11 @@ const createTables = async () => {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+        await client.query("COMMIT");
+    } catch (error) {
+        await client.query("ROLLBACK");
+        throw error;
     } finally {
         client.release();
     }
@@ -225,22 +179,13 @@ const createTables = async () => {
 const insertAccounts = async (accounts) => {
     const client = await pool.connect();
     try {
-        // First transaction: Insert or update accounts
         await client.query("BEGIN");
         for (const account of accounts) {
             await client.query(
                 `
-                INSERT INTO accounts (name, friendly_name, balance, type, insert_frequency, insert_amount, insert_start_date) VALUES ($1, $2, $3, $4, $5, $6, $7);
+                INSERT INTO accounts (name, balance, type) VALUES ($1, $2, $3);
             `,
-                [
-                    account.name,
-                    account.friendly_name,
-                    account.balance,
-                    account.type,
-                    account.insert_frequency,
-                    account.insert_amount,
-                    account.insert_start_date,
-                ]
+                [account.name, account.balance, account.type]
             );
         }
         await client.query("COMMIT");
@@ -289,6 +234,46 @@ const insertData = async (data) => {
     }
 };
 
+app.get("/", async (req, res) => {
+    try {
+        const result = await pool.query("SELECT NOW() as current_time");
+        return res.json({
+            status: "healthy",
+            database_connection: "successful",
+            current_time: result.rows[0].current_time,
+            message: "HEALTHY",
+        });
+    } catch (error) {
+        console.error("Database connection error:", error);
+        return res.status(500).json({
+            status: "unhealthy",
+            database_connection: "failed",
+            error: "Unable to connect to the database",
+            message: "UNHEALTHY",
+        });
+    }
+});
+
+app.get("/accounts", async (req, res) => {
+    const accounts = await getAccounts();
+    return res.json(accounts);
+});
+
+app.post("/account", async (req, res) => {
+    const account = await createAccount(req.body);
+    return res.json(account);
+});
+
+app.get("/transactions", async (req, res) => {
+    const transactions = await getTransactions();
+    return res.json(transactions);
+});
+
+app.post("/transaction", async (req, res) => {
+    const transaction = await createTransaction(req.body);
+    return res.json(transaction);
+});
+
 app.get("/download-data", async (req, res) => {
     try {
         const data = await getAllData();
@@ -303,12 +288,18 @@ app.post("/upload-data", async (req, res) => {
     try {
         await createTables();
         await insertData(req.body);
-        res.json({ message: "Data uploaded successfully" });
+        res.json({ status: 200, message: "Data uploaded successfully" });
     } catch (error) {
         console.error("Error uploading data:", error);
         res.status(500).json({ error: "An error occurred while uploading data" });
     }
 });
+
+// Schedule the deposits to run daily at midnight
+// cron.schedule("0 0 * * *", () => {
+//     console.log("Running daily deposit check");
+//     performWeeklyDeposits();
+// });
 
 app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
