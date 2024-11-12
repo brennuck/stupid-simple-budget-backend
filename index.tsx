@@ -78,8 +78,28 @@ app.use(
 // };
 
 const getAccounts = async () => {
-    const result = await pool.query("SELECT * FROM accounts order by id asc;");
-    return result.rows;
+    const client = await pool.connect();
+    try {
+        // Check if accounts table exists
+        const tableCheck = await client.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'accounts'
+            );
+        `);
+
+        if (!tableCheck.rows[0].exists) {
+            throw new Error("Accounts table does not exist");
+        }
+
+        const result = await client.query("SELECT * FROM accounts order by id asc;");
+        return result.rows;
+    } catch (error) {
+        console.error("Error in getAccounts:", error);
+        throw error;
+    } finally {
+        client.release();
+    }
 };
 
 const createAccount = async (account) => {
@@ -92,8 +112,28 @@ const createAccount = async (account) => {
 };
 
 const getTransactions = async () => {
-    const result = await pool.query("SELECT * FROM transactions order by created_at desc;");
-    return result.rows;
+    const client = await pool.connect();
+    try {
+        // Check if transactions table exists
+        const tableCheck = await client.query(`
+            SELECT EXISTS (
+                SELECT FROM information_schema.tables 
+                WHERE table_name = 'transactions'
+            );
+        `);
+
+        if (!tableCheck.rows[0].exists) {
+            throw new Error("Transactions table does not exist");
+        }
+
+        const result = await client.query("SELECT * FROM transactions order by created_at desc;");
+        return result.rows;
+    } catch (error) {
+        console.error("Error in getTransactions:", error);
+        throw error;
+    } finally {
+        client.release();
+    }
 };
 
 const createTransaction = async (transaction) => {
@@ -255,8 +295,15 @@ app.get("/", async (req, res) => {
 });
 
 app.get("/accounts", async (req, res) => {
-    const accounts = await getAccounts();
-    return res.json(accounts);
+    try {
+        const accounts = await getAccounts();
+        return res.json(accounts);
+    } catch (error) {
+        console.error("Error fetching accounts:", error);
+        return res.status(500).json({
+            error: error.message || "An error occurred while fetching accounts",
+        });
+    }
 });
 
 app.post("/account", async (req, res) => {
@@ -265,8 +312,15 @@ app.post("/account", async (req, res) => {
 });
 
 app.get("/transactions", async (req, res) => {
-    const transactions = await getTransactions();
-    return res.json(transactions);
+    try {
+        const transactions = await getTransactions();
+        return res.json(transactions);
+    } catch (error) {
+        console.error("Error fetching transactions:", error);
+        return res.status(500).json({
+            error: error.message || "An error occurred while fetching transactions",
+        });
+    }
 });
 
 app.post("/transaction", async (req, res) => {
