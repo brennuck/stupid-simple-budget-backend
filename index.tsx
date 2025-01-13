@@ -151,8 +151,9 @@ const createTransaction = async (transaction) => {
                 transaction.amount,
                 transaction.account_id,
             ]);
-            if (transaction.account_id !== 1 && transaction.account_id !== 9) {
-                await pool.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'savings';", [
+
+            if (transaction.account_id !== 1 && transaction.take_from_savings) {
+                await pool.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'Marcus';", [
                     transaction.amount,
                 ]);
             }
@@ -165,6 +166,12 @@ const createTransaction = async (transaction) => {
                 transaction.amount,
                 transaction.account_id,
             ]);
+
+            if (transaction.account_id !== 1 && transaction.take_from_savings) {
+                await pool.query("UPDATE accounts SET balance = balance - $1 WHERE name = 'Marcus';", [
+                    transaction.amount,
+                ]);
+            }
         }
 
         await client.query("COMMIT");
