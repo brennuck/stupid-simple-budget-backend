@@ -142,33 +142,37 @@ const createTransaction = async (transaction) => {
     try {
         await client.query("BEGIN");
 
+        const accountId = Number(transaction.account_id);
+        const normalizedAccountId = Number.isNaN(accountId) ? transaction.account_id : accountId;
+        const shouldUpdateSavings = normalizedAccountId !== 1 && transaction.take_from_savings;
+
         if (transaction.type === "expense") {
-            await pool.query(
+            await client.query(
                 "INSERT INTO transactions (amount, description, date, from_account_id) VALUES ($1, $2, $3, $4);",
-                [transaction.amount, transaction.description, transaction.date, transaction.account_id]
+                [transaction.amount, transaction.description, transaction.date, normalizedAccountId]
             );
-            await pool.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2;", [
+            await client.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2;", [
                 transaction.amount,
-                transaction.account_id,
+                normalizedAccountId,
             ]);
 
-            if (transaction.account_id !== 1 && transaction.take_from_savings) {
-                await pool.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'Marcus';", [
+            if (shouldUpdateSavings) {
+                await client.query("UPDATE accounts SET balance = balance + $1 WHERE name = 'Marcus';", [
                     transaction.amount,
                 ]);
             }
         } else {
-            await pool.query(
+            await client.query(
                 "INSERT INTO transactions (amount, description, date, to_account_id) VALUES ($1, $2, $3, $4) RETURNING *;",
-                [transaction.amount, transaction.description, transaction.date, transaction.account_id]
+                [transaction.amount, transaction.description, transaction.date, normalizedAccountId]
             );
-            await pool.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2;", [
+            await client.query("UPDATE accounts SET balance = balance + $1 WHERE id = $2;", [
                 transaction.amount,
-                transaction.account_id,
+                normalizedAccountId,
             ]);
 
-            if (transaction.account_id !== 1 && transaction.take_from_savings) {
-                await pool.query("UPDATE accounts SET balance = balance - $1 WHERE name = 'Marcus';", [
+            if (shouldUpdateSavings) {
+                await client.query("UPDATE accounts SET balance = balance - $1 WHERE name = 'Marcus';", [
                     transaction.amount,
                 ]);
             }
@@ -362,6 +366,21 @@ app.post("/upload-data", async (req, res) => {
 //     performWeeklyDeposits();
 // });
 
-app.listen(PORT, () => {
-    console.log(`Server listening on ${PORT}`);
-});
+if (require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`Server listening on ${PORT}`);
+    });
+}
+
+module.exports = {
+    app,
+    createTransaction,
+    getAccounts,
+    getTransactions,
+    getAllData,
+    createAccount,
+    createTables,
+    insertAccounts,
+    insertTransactions,
+    insertData,
+};
